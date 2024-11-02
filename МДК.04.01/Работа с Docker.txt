@@ -1,0 +1,8 @@
+В отдельном файле прикрепил docker-compose
+
+Приложения:
+Мобилка + Веб https://github.com/EventGamer67/Chronos ( https://uksivt.xyz )
+Приложение диспетчера расписания Веб https://github.com/EventGamer67/Gefest ( https://admin.uksivt.xyz )
+Телеграмм бот https://github.com/EventGamer67/Uksivt_telegram ( @UksivtZameny_bot )
+API FastApi https://github.com/EventGamer67/Medusa ( https://api.uksivt.xyz/ )
+Парсеры ( для файлов расписания, сайта ) https://github.com/EventGamer67/ScheduleParser

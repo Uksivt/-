@@ -1,0 +1,123 @@
+version: '3.7'
+
+services:
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS} 
+    networks:
+      - medusa_network
+
+  flower:
+    image: mher/flower
+    container_name: flower
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: ${BROKER_URL} 
+    depends_on:
+      - rabbitmq
+    networks:
+      - medusa_network
+        
+  postgres:
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgresss_datav6:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - medusa_network
+      
+  redis:
+    image: redis:7-alpine
+    command: redis-server --loglevel debug
+    volumes: 
+      - cache:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - medusa_network
+
+  fastapi:
+    build:
+      context: https://github.com/EventGamer67/Medusa.git#master
+      dockerfile: Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      API_SECRET: ${API_SECRET}
+      SUPABASE_DATABASE_CONNECTION: ${SUPABASE_DATABASE_CONNECTION}
+      LOCAL_DATABASE_CONNECTION: ${LOCAL_DATABASE_CONNECTION}
+      API_KEY: ${API_KEY}
+      SECRET: ${SECRET}
+      IS_DEV: ${IS_DEV}
+      SCHEDULER_SUPABASE_URL: ${SCHEDULER_SUPABASE_URL}
+      SCHEDULER_SUPABASE_ANON_KEY: ${SCHEDULER_SUPABASE_ANON_KEY}
+      BACKEND_URL: ${BACKEND_URL}
+      BROKER_URL: ${BROKER_URL}
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
+    ports:
+      - "5001:5000"
+    restart: always
+    networks:
+      - dokploy-network
+      - medusa_network
+
+  telegram_bot:
+    build:
+      context: https://github.com/EventGamer67/Uksivt_telegram.git#master
+      dockerfile: Dockerfile
+    environment:
+      TELEGRAM_API_TOKEN: ${TELEGRAM_API_TOKEN}
+      TELEGRAM_API_URL: ${TELEGRAM_API_URL}
+      API_KEY: ${API_KEY}
+      BACKEND_URL: ${BACKEND_URL}
+      BROKER_URL: ${BROKER_URL}
+      TELEGRAM_MAIN_CHANNEL_ANCHOR_MESSAGE: ${TELEGRAM_MAIN_CHANNEL_ANCHOR_MESSAGE}
+      TELEGRAM_MAIN_CHANNEL: ${TELEGRAM_MAIN_CHANNEL}
+      TELEGRAM_DEBUG_CHANNEL: ${TELEGRAM_DEBUG_CHANNEL}
+      CHECK_ZAMENA_INTERVAL_START_HOUR: ${CHECK_ZAMENA_INTERVAL_START_HOUR}
+      CHECK_ZAMENA_INTERVAL_MINUTES: ${CHECK_ZAMENA_INTERVAL_MINUTES}
+      CHECK_ZAMENA_INTERVAL_END_HOUR: ${CHECK_ZAMENA_INTERVAL_END_HOUR}
+      SCHEDULER_SUPABASE_URL: ${SCHEDULER_SUPABASE_URL}
+      SCHEDULER_SUPABASE_ANON_KEY: ${SCHEDULER_SUPABASE_ANON_KEY}
+    networks:
+      - medusa_network
+
+  # parser:
+  #   build:
+  #     context: https://github.com/EventGamer67/ScheduleParser.git#refactor-legacy
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     SCHEDULER_SUPABASE_URL: ${SCHEDULER_SUPABASE_URL}
+  #     SCHEDULER_SUPABASE_ANON_KEY: ${SCHEDULER_SUPABASE_ANON_KEY}
+  #     SCHEDULER_REDIS_USERNAME: ${SCHEDULER_REDIS_USERNAME}
+  #     SCHEDULER_REDIS_PASSWORD: ${SCHEDULER_REDIS_PASSWORD}
+  #     SCHEDULER_REDIS_PORT: ${SCHEDULER_REDIS_PORT}
+  #     SCHEDULER_REDIS_HOST_URL: ${SCHEDULER_REDIS_HOST_URL}
+  #     BACKEND_URL: ${BACKEND_URL}
+  #     BROKER_URL: ${BROKER_URL}
+  #   networks:
+  #     - medusa_network
+
+networks:
+  dokploy-network:
+     external: true
+  medusa_network:
+    driver: bridge
+
+volumes:
+  postgresss_datav6:
+  cache:
+    driver: local
